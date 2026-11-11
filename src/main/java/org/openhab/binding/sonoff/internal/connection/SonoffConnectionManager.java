@@ -196,8 +196,8 @@ public class SonoffConnectionManager
     /**
      * Send LAN messages coming back from the message provider
      */
-    public void sendLanMessage(String url, String payload) {
-        lan.sendMessage(url, payload);
+    public void sendLanMessage(String deviceid, String url, String payload) {
+        lan.sendMessage(deviceid, url, payload);
     }
 
     /**
@@ -240,6 +240,11 @@ public class SonoffConnectionManager
     @Override
     public void lanResponse(String message) {
         listener.lanResponse(message);
+    }
+
+    @Override
+    public void lanDeviceReachable(String deviceid, Boolean reachable) {
+        listener.lanDeviceReachable(deviceid, reachable);
     }
 
     @Override

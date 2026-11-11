@@ -224,8 +224,9 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
             // Send LAN Message
             if (!ipaddress.equals("")) {
                 logger.debug("Sending message via LAN");
-                listener.sendLanMessage(url, new SonoffCommandMessageEncryptionUtilities().encrypt(
-                        gson.toJson(message.getParams()), deviceKey, message.getDeviceid(), message.getSequence()));
+                listener.sendLanMessage(message.getDeviceid(), url,
+                        new SonoffCommandMessageEncryptionUtilities().encrypt(gson.toJson(message.getParams()),
+                                deviceKey, message.getDeviceid(), message.getSequence()));
             }
             return;
         }
@@ -387,6 +388,10 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
     public void serviceRemoved(@Nullable ServiceEvent event) {
         if (event != null) {
             logger.debug("Sonoff - LAN Service removed:{}", event.getInfo());
+            String deviceid = getDeviceId(event);
+            if (deviceid != null) {
+                setLocal(deviceid, false, "mDNS service removed");
+            }
         }
     }
 
@@ -404,7 +409,13 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
                 device.addProperty(name.equals("id") ? "deviceid" : name, value);
             }
             device.addProperty("localAddress", localAddress.equals("null") ? "" : localAddress);
+            String deviceid = device.get("deviceid").getAsString();
+            SonoffDeviceState state = listener.getState(deviceid);
+            boolean wasLocal = state != null && state.getLocal();
             processState(device, true);
+            if (state != null && !wasLocal && state.getLocal()) {
+                logger.info("Device {} is reachable on the LAN (mDNS service resolved)", deviceid);
+            }
         }
     }
 
@@ -417,5 +428,38 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
     public void isConnected(Boolean lanConnected, Boolean cloudConnected) {
         this.lanConnected = lanConnected;
         this.cloudConnected = cloudConnected;
+    }
+
+    @Override
+    public void lanDeviceReachable(String deviceid, Boolean reachable) {
+        setLocal(deviceid, reachable, reachable ? "LAN request answered" : "LAN request failed");
+    }
+
+    /**
+     * Works out which device a mDNS service belongs to, the service name is eWeLink_&lt;deviceid&gt;
+     */
+    private @Nullable String getDeviceId(ServiceEvent event) {
+        String name = event.getName();
+        if (name != null && name.startsWith("eWeLink_")) {
+            return name.substring("eWeLink_".length());
+        }
+        return event.getInfo().getPropertyString("id");
+    }
+
+    /**
+     * Updates the LAN state of a device and forwards the change to its handler
+     */
+    private synchronized void setLocal(String deviceid, boolean local, String reason) {
+        SonoffDeviceState state = listener.getState(deviceid);
+        if (state == null || state.getLocal() == local) {
+            return;
+        }
+        logger.info("Device {} is {} on the LAN ({})", deviceid, local ? "reachable" : "no longer reachable",
+                reason);
+        state.setLocal(local);
+        SonoffDeviceListener deviceListener = listener.getListener(deviceid);
+        if (deviceListener != null) {
+            deviceListener.updateDevice(state);
+        }
     }
 }

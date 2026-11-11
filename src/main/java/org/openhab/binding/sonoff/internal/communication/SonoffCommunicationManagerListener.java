@@ -34,7 +34,7 @@ public interface SonoffCommunicationManagerListener {
     SonoffDeviceListener getListener(String deviceid);
 
     // Message Operations
-    void sendLanMessage(String url, String payload);
+    void sendLanMessage(String deviceid, String url, String payload);
 
     void sendApiMessage(String deviceid);
 

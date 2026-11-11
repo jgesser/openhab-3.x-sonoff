@@ -27,4 +27,9 @@ public interface SonoffLanConnectionListener extends ServiceListener {
     void lanResponse(String message);
 
     void lanConnected(Boolean connected);
+
+    /**
+     * Whether a LAN request to a device got an answer (true) or failed at transport level (false)
+     */
+    void lanDeviceReachable(String deviceid, Boolean reachable);
 }

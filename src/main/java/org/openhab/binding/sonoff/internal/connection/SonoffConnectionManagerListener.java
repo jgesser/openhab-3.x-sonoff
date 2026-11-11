@@ -39,6 +39,12 @@ public interface SonoffConnectionManagerListener extends ServiceListener {
     void lanResponse(String message);
 
     /**
+     * Whether a LAN request to a device got an answer (true) or failed at transport level (false)
+     *
+     */
+    void lanDeviceReachable(String deviceid, Boolean reachable);
+
+    /**
      * Responses coming from the Websocket Connection
      *
      */

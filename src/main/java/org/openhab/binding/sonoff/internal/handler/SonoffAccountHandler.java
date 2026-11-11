@@ -221,8 +221,8 @@ public class SonoffAccountHandler extends BaseBridgeHandler
      *
      */
     @Override
-    public void sendLanMessage(String url, String payload) {
-        connectionManager.sendLanMessage(url, payload);
+    public void sendLanMessage(String deviceid, String url, String payload) {
+        connectionManager.sendLanMessage(deviceid, url, payload);
     }
 
     /**
@@ -365,6 +365,11 @@ public class SonoffAccountHandler extends BaseBridgeHandler
     @Override
     public void lanResponse(String message) {
         commandManager.lanResponse(message);
+    }
+
+    @Override
+    public void lanDeviceReachable(String deviceid, Boolean reachable) {
+        commandManager.lanDeviceReachable(deviceid, reachable);
     }
 
     @Override
