@@ -118,6 +118,10 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
             if (message.getCommand().equals("consumption") || message.getCommand().equals("uiActive")) {
                 messageTypes.put(message.getSequence(), message.getCommand());
                 sendMessage(message);
+            } else if (message.getCommand().equals("sledOnline") && message.getLanSupported()) {
+                // The LAN poll is repeated every localPoll seconds, a lost one is not retried: retrying would
+                // send overlapping requests to a device that serves one connection at a time
+                sendMessage(message);
             } else {
                 // Add our message type so we can identify it correctly when we get the response
                 messageTypes.put(message.getSequence(), message.getCommand());
@@ -132,8 +136,8 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
                     Integer sendCount = retryCountMap.get(message.getSequence());
                     if (sendCount != null) {
                         if (sendCount.intValue() >= 3) {
-                            logger.warn("Unable to send transaction {}, command was {}, after {} retry attempts",
-                                    message.getSequence(), message.getCommand(), 3);
+                            logger.warn("Unable to send transaction {}, command was {}, device {}, after {} attempts",
+                                    message.getSequence(), message.getCommand(), message.getDeviceid(), 3);
                             return;
                         }
                         newRetryCount = Integer.valueOf(sendCount.intValue() + 1);
@@ -144,8 +148,8 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
 
                     }
                     logger.warn(
-                            "Ok message not received for transaction: {}, command was {}, retrying again. Retry count {}",
-                            message.getSequence(), message.getCommand(), newRetryCount);
+                            "Ok message not received for transaction: {}, command was {}, device {}, retry count {}",
+                            message.getSequence(), message.getCommand(), message.getDeviceid(), newRetryCount);
                     retryCountMap.put(message.getSequence(), newRetryCount);
 
                     addToQueue(message);
@@ -340,9 +344,16 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
                 if (messageType.equals("consumption")) {
                     JsonObject device = gson.fromJson(response, JsonObject.class);
                     if (device != null) {
-                        JsonObject params = device.getAsJsonObject("config");
-                        device.add("params", params);
-                        processState(device, false);
+                        JsonElement config = device.get("config");
+                        if (config != null && config.isJsonObject()) {
+                            device.add("params", config);
+                            processState(device, false);
+                        } else {
+                            JsonElement deviceid = device.get("deviceid");
+                            logger.info("Consumption request for device {} returned no data, error {}: {}",
+                                    deviceid != null && deviceid.isJsonPrimitive() ? deviceid.getAsString() : "unknown",
+                                    messageErrorCode, messageError);
+                        }
                     }
                     return;
                 }

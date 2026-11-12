@@ -72,12 +72,14 @@ public class SonoffDeviceState {
         if (device.get("online") != null) {
             setCloud(device.get("online").getAsBoolean());
         }
-        if (device.get("params") != null) {
-            if (device.getAsJsonObject("params").get("online") != null) {
-                setCloud(device.getAsJsonObject("params").get("online").getAsBoolean());
+        JsonElement params = device.get("params");
+        if (params != null && params.isJsonObject()) {
+            JsonElement online = params.getAsJsonObject().get("online");
+            if (online != null && !online.isJsonNull()) {
+                setCloud(online.getAsBoolean());
             }
+            setParameters(params.getAsJsonObject());
         }
-        setParameters(device.getAsJsonObject("params"));
         if (uiid.equals(66) || uiid.equals(28)) {
             setSubDevices(device);
         }
