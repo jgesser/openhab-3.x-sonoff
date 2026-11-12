@@ -431,8 +431,8 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
     }
 
     @Override
-    public void lanDeviceReachable(String deviceid, Boolean reachable) {
-        setLocal(deviceid, reachable, reachable ? "LAN request answered" : "LAN request failed");
+    public void lanDeviceReachable(String deviceid, Boolean reachable, @Nullable String cause) {
+        setLocal(deviceid, reachable, reachable ? "LAN request answered" : "LAN request failed: " + cause);
     }
 
     /**

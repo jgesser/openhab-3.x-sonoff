@@ -15,6 +15,7 @@ package org.openhab.binding.sonoff.internal.connection;
 import javax.jmdns.ServiceListener;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 
 import com.google.gson.JsonObject;
 
@@ -39,10 +40,11 @@ public interface SonoffConnectionManagerListener extends ServiceListener {
     void lanResponse(String message);
 
     /**
-     * Whether a LAN request to a device got an answer (true) or failed at transport level (false)
+     * Whether a LAN request to a device got an answer (true) or failed at transport level (false), in which case
+     * the cause describes the failure
      *
      */
-    void lanDeviceReachable(String deviceid, Boolean reachable);
+    void lanDeviceReachable(String deviceid, Boolean reachable, @Nullable String cause);
 
     /**
      * Responses coming from the Websocket Connection

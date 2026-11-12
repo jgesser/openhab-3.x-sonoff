@@ -150,11 +150,13 @@ public class SonoffLanConnection {
                             // Any HTTP answer means the device is reachable, only transport errors (timeout,
                             // connection refused, no route to host) mean it is not
                             if (result != null) {
-                                if (result.isFailed()) {
-                                    logger.debug("LAN request to device {} ({}) failed: {}", deviceid, url,
-                                            result.getFailure());
+                                Throwable failure = result.getFailure();
+                                String cause = failure == null ? null
+                                        : failure.getClass().getSimpleName() + ": " + failure.getMessage();
+                                if (cause != null) {
+                                    logger.debug("LAN request to device {} ({}) failed: {}", deviceid, url, cause);
                                 }
-                                listener.lanDeviceReachable(deviceid, !result.isFailed());
+                                listener.lanDeviceReachable(deviceid, cause == null, cause);
                             }
                         }
                     });

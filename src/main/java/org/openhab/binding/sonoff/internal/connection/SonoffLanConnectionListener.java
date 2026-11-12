@@ -15,6 +15,7 @@ package org.openhab.binding.sonoff.internal.connection;
 import javax.jmdns.ServiceListener;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * The {@link SonoffMessageListener} passes all received messages from connections to be converted
@@ -29,7 +30,8 @@ public interface SonoffLanConnectionListener extends ServiceListener {
     void lanConnected(Boolean connected);
 
     /**
-     * Whether a LAN request to a device got an answer (true) or failed at transport level (false)
+     * Whether a LAN request to a device got an answer (true) or failed at transport level (false), in which case
+     * the cause describes the failure
      */
-    void lanDeviceReachable(String deviceid, Boolean reachable);
+    void lanDeviceReachable(String deviceid, Boolean reachable, @Nullable String cause);
 }

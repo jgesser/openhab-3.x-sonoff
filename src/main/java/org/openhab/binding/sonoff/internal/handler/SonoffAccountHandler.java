@@ -368,8 +368,8 @@ public class SonoffAccountHandler extends BaseBridgeHandler
     }
 
     @Override
-    public void lanDeviceReachable(String deviceid, Boolean reachable) {
-        commandManager.lanDeviceReachable(deviceid, reachable);
+    public void lanDeviceReachable(String deviceid, Boolean reachable, @Nullable String cause) {
+        commandManager.lanDeviceReachable(deviceid, reachable, cause);
     }
 
     @Override

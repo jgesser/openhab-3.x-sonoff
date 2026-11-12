@@ -243,8 +243,8 @@ public class SonoffConnectionManager
     }
 
     @Override
-    public void lanDeviceReachable(String deviceid, Boolean reachable) {
-        listener.lanDeviceReachable(deviceid, reachable);
+    public void lanDeviceReachable(String deviceid, Boolean reachable, @Nullable String cause) {
+        listener.lanDeviceReachable(deviceid, reachable, cause);
     }
 
     @Override
