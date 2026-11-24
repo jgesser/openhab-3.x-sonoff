@@ -32,6 +32,7 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,7 +130,7 @@ public class SonoffLanConnection {
         return addresses;
     }
 
-    public void sendMessage(String url, String payload) {
+    public void sendMessage(String deviceid, String url, String payload) {
         logger.debug("Sending LAN Update to {}", url);
         try {
             httpClient.newRequest(url).method("POST").header("accept", "application/json")
@@ -142,6 +143,21 @@ public class SonoffLanConnection {
                                 String content = StandardCharsets.UTF_8.decode(buffer).toString();
                                 logger.debug("Lan response received: {}", content);
                                 listener.lanResponse(content);
+                            }
+                        }
+
+                        @Override
+                        public void onComplete(@Nullable Result result) {
+                            // Any HTTP answer means the device is reachable, only transport errors (timeout,
+                            // connection refused, no route to host) mean it is not
+                            if (result != null) {
+                                Throwable failure = result.getFailure();
+                                String cause = failure == null ? null
+                                        : failure.getClass().getSimpleName() + ": " + failure.getMessage();
+                                if (cause != null) {
+                                    logger.debug("LAN request to device {} ({}) failed: {}", deviceid, url, cause);
+                                }
+                                listener.lanDeviceReachable(deviceid, cause == null, cause);
                             }
                         }
                     });

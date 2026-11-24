@@ -121,6 +121,10 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
             if (message.getCommand().equals("consumption") || message.getCommand().equals("uiActive")) {
                 messageTypes.put(message.getSequence(), message.getCommand());
                 sendMessage(message);
+            } else if (message.getCommand().equals("sledOnline") && message.getLanSupported()) {
+                // The LAN poll is repeated every localPoll seconds, a lost one is not retried: retrying would
+                // send overlapping requests to a device that serves one connection at a time
+                sendMessage(message);
             } else {
                 // Add our message type so we can identify it correctly when we get the response
                 messageTypes.put(message.getSequence(), message.getCommand());
@@ -137,8 +141,8 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
                     Integer sendCount = retryCountMap.get(message.getSequence());
                     if (sendCount != null) {
                         if (sendCount.intValue() >= 3) {
-                            logger.warn("Unable to send transaction {}, command was {}, after {} retry attempts",
-                                    message.getSequence(), message.getCommand(), 3);
+                            logger.warn("Unable to send transaction {}, command was {}, device {}, after {} attempts",
+                                    message.getSequence(), message.getCommand(), message.getDeviceid(), 3);
                             return;
                         }
                         newRetryCount = Integer.valueOf(sendCount.intValue() + 1);
@@ -149,8 +153,8 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
 
                     }
                     logger.warn(
-                            "Message not received for transaction: {}, command was {}, retrying again. Retry count {}",
-                            message.getSequence(), message.getCommand(), newRetryCount);
+                            "Ok message not received for transaction: {}, command was {}, device {}, retry count {}",
+                            message.getSequence(), message.getCommand(), message.getDeviceid(), newRetryCount);
                     retryCountMap.put(message.getSequence(), newRetryCount);
 
                     addToQueue(message);
@@ -262,8 +266,9 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
                 logger.debug("Sending message via LAN to: {}", url);
                 String paramsJson = gson.toJson(message.getParams());
                 logger.debug("LAN Command params JSON (before encryption): {}", paramsJson);
-                listener.sendLanMessage(url, new SonoffCommandMessageEncryptionUtilities().encrypt(paramsJson,
-                        deviceKey, message.getDeviceid(), message.getSequence()));
+                listener.sendLanMessage(message.getDeviceid(), url,
+                        new SonoffCommandMessageEncryptionUtilities().encrypt(paramsJson, deviceKey,
+                                message.getDeviceid(), message.getSequence()));
                 logger.debug("************* SEND MESSAGE END (LAN) *************");
                 return;
             } else {
@@ -539,6 +544,10 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
     public void serviceRemoved(@Nullable ServiceEvent event) {
         if (event != null) {
             logger.debug("Sonoff - LAN Service removed:{}", event.getInfo());
+            String deviceid = getDeviceId(event);
+            if (deviceid != null) {
+                setLocal(deviceid, false, "mDNS service removed");
+            }
         }
     }
 
@@ -556,7 +565,13 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
                 device.addProperty(name.equals("id") ? "deviceid" : name, value);
             }
             device.addProperty("localAddress", localAddress.equals("null") ? "" : localAddress);
+            String deviceid = device.get("deviceid").getAsString();
+            SonoffDeviceState state = listener.getState(deviceid);
+            boolean wasLocal = state != null && state.getLocal();
             processState(device, true);
+            if (state != null && !wasLocal && state.getLocal()) {
+                logger.info("Device {} is reachable on the LAN (mDNS service resolved)", deviceid);
+            }
         }
     }
 
@@ -569,5 +584,38 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
     public void isConnected(Boolean lanConnected, Boolean cloudConnected) {
         this.lanConnected = lanConnected;
         this.cloudConnected = cloudConnected;
+    }
+
+    @Override
+    public void lanDeviceReachable(String deviceid, Boolean reachable, @Nullable String cause) {
+        setLocal(deviceid, reachable, reachable ? "LAN request answered" : "LAN request failed: " + cause);
+    }
+
+    /**
+     * Works out which device a mDNS service belongs to, the service name is eWeLink_&lt;deviceid&gt;
+     */
+    private @Nullable String getDeviceId(ServiceEvent event) {
+        String name = event.getName();
+        if (name != null && name.startsWith("eWeLink_")) {
+            return name.substring("eWeLink_".length());
+        }
+        return event.getInfo().getPropertyString("id");
+    }
+
+    /**
+     * Updates the LAN state of a device and forwards the change to its handler
+     */
+    private synchronized void setLocal(String deviceid, boolean local, String reason) {
+        SonoffDeviceState state = listener.getState(deviceid);
+        if (state == null || state.getLocal() == local) {
+            return;
+        }
+        logger.info("Device {} is {} on the LAN ({})", deviceid, local ? "reachable" : "no longer reachable",
+                reason);
+        state.setLocal(local);
+        SonoffDeviceListener deviceListener = listener.getListener(deviceid);
+        if (deviceListener != null) {
+            deviceListener.updateDevice(state);
+        }
     }
 }
