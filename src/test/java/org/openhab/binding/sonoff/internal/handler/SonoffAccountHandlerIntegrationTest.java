@@ -236,7 +236,7 @@ class SonoffAccountHandlerIntegrationTest {
         assertTrue(handler.messagesQueued.contains(message2));
 
         // Act - Send various communication types
-        handler.sendLanMessage("http://device1.local", "lan-payload");
+        handler.sendLanMessage("device1", "http://device1.local", "lan-payload");
         handler.sendApiMessage("device1");
         handler.sendWebsocketMessage("websocket-params");
 
@@ -326,7 +326,7 @@ class SonoffAccountHandlerIntegrationTest {
                 for (int i = 0; i < 5; i++) {
                     SonoffCommandMessage message = new SonoffCommandMessage("device" + i);
                     handler.queueMessage(message);
-                    handler.sendLanMessage("http://device" + i + ".local", "payload" + i);
+                    handler.sendLanMessage("device" + i, "http://device" + i + ".local", "payload" + i);
                     Thread.sleep(10);
                 }
             } catch (InterruptedException e) {
@@ -517,7 +517,7 @@ class SonoffAccountHandlerIntegrationTest {
         }
 
         @Override
-        public void sendLanMessage(String url, String payload) {
+        public void sendLanMessage(String deviceid, String url, String payload) {
             synchronized (lanMessagesSent) {
                 lanMessagesSent.put(url, payload);
             }

@@ -516,7 +516,7 @@ class SonoffAccountHandlerTest {
         String payload = "test-payload";
 
         // Act
-        handler.sendLanMessage(url, payload);
+        handler.sendLanMessage("test-device", url, payload);
 
         // Assert
         assertTrue(handler.lanMessagesSent.containsKey(url));
@@ -996,7 +996,7 @@ class SonoffAccountHandlerTest {
         }
 
         @Override
-        public void sendLanMessage(String url, String payload) {
+        public void sendLanMessage(String deviceid, String url, String payload) {
             lanMessagesSent.put(url, payload);
         }
 

@@ -200,7 +200,7 @@ class SonoffCommunicationManagerTest {
         communicationManager.sendMessage(message);
 
         // Assert - Should not call any send methods
-        verify(mockListener, never()).sendLanMessage(anyString(), anyString());
+        verify(mockListener, never()).sendLanMessage(anyString(), anyString(), anyString());
         verify(mockListener, never()).sendWebsocketMessage(anyString());
     }
 
@@ -223,7 +223,7 @@ class SonoffCommunicationManagerTest {
         communicationManager.sendMessage(message);
 
         // Assert
-        verify(mockListener).sendLanMessage(contains("http://" + TEST_IP_ADDRESS + ":8081/zeroconf/switch"),
+        verify(mockListener).sendLanMessage(anyString(), contains("http://" + TEST_IP_ADDRESS + ":8081/zeroconf/switch"),
                 anyString());
     }
 
@@ -259,7 +259,7 @@ class SonoffCommunicationManagerTest {
         communicationManager.sendMessage(message);
 
         // Assert - Should not call any send methods
-        verify(mockListener, never()).sendLanMessage(anyString(), anyString());
+        verify(mockListener, never()).sendLanMessage(anyString(), anyString(), anyString());
         verify(mockListener, never()).sendWebsocketMessage(anyString());
         verify(mockListener, never()).sendApiMessage(anyString());
     }
@@ -488,7 +488,7 @@ class SonoffCommunicationManagerTest {
         communicationManager.sendMessage(message);
 
         // Should use LAN since it's connected
-        verify(mockListener).sendLanMessage(anyString(), anyString());
+        verify(mockListener).sendLanMessage(anyString(), anyString(), anyString());
     }
 
     @Test

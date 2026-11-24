@@ -165,55 +165,55 @@ class SonoffCommunicationManagerListenerTest {
     @Test
     void testSendLanMessage_WithValidParameters_ShouldInvokeMethod() {
         // Arrange
-        doNothing().when(listener).sendLanMessage(TEST_URL, TEST_PAYLOAD);
+        doNothing().when(listener).sendLanMessage(TEST_DEVICE_ID, TEST_URL, TEST_PAYLOAD);
 
         // Act
-        listener.sendLanMessage(TEST_URL, TEST_PAYLOAD);
+        listener.sendLanMessage(TEST_DEVICE_ID, TEST_URL, TEST_PAYLOAD);
 
         // Assert
-        verify(listener).sendLanMessage(TEST_URL, TEST_PAYLOAD);
+        verify(listener).sendLanMessage(TEST_DEVICE_ID, TEST_URL, TEST_PAYLOAD);
     }
 
     @Test
     void testSendLanMessage_WithNullUrl_ShouldHandleGracefully() {
         // Arrange
-        doNothing().when(listener).sendLanMessage(null, TEST_PAYLOAD);
+        doNothing().when(listener).sendLanMessage(TEST_DEVICE_ID, null, TEST_PAYLOAD);
 
         // Act & Assert - Should not throw exception
-        assertDoesNotThrow(() -> listener.sendLanMessage(null, TEST_PAYLOAD));
-        verify(listener).sendLanMessage(null, TEST_PAYLOAD);
+        assertDoesNotThrow(() -> listener.sendLanMessage(TEST_DEVICE_ID, null, TEST_PAYLOAD));
+        verify(listener).sendLanMessage(TEST_DEVICE_ID, null, TEST_PAYLOAD);
     }
 
     @Test
     void testSendLanMessage_WithNullPayload_ShouldHandleGracefully() {
         // Arrange
-        doNothing().when(listener).sendLanMessage(TEST_URL, null);
+        doNothing().when(listener).sendLanMessage(TEST_DEVICE_ID, TEST_URL, null);
 
         // Act & Assert - Should not throw exception
-        assertDoesNotThrow(() -> listener.sendLanMessage(TEST_URL, null));
-        verify(listener).sendLanMessage(TEST_URL, null);
+        assertDoesNotThrow(() -> listener.sendLanMessage(TEST_DEVICE_ID, TEST_URL, null));
+        verify(listener).sendLanMessage(TEST_DEVICE_ID, TEST_URL, null);
     }
 
     @Test
     void testSendLanMessage_WithEmptyUrl_ShouldHandleGracefully() {
         // Arrange
         String emptyUrl = "";
-        doNothing().when(listener).sendLanMessage(emptyUrl, TEST_PAYLOAD);
+        doNothing().when(listener).sendLanMessage(TEST_DEVICE_ID, emptyUrl, TEST_PAYLOAD);
 
         // Act & Assert - Should not throw exception
-        assertDoesNotThrow(() -> listener.sendLanMessage(emptyUrl, TEST_PAYLOAD));
-        verify(listener).sendLanMessage(emptyUrl, TEST_PAYLOAD);
+        assertDoesNotThrow(() -> listener.sendLanMessage(TEST_DEVICE_ID, emptyUrl, TEST_PAYLOAD));
+        verify(listener).sendLanMessage(TEST_DEVICE_ID, emptyUrl, TEST_PAYLOAD);
     }
 
     @Test
     void testSendLanMessage_WithEmptyPayload_ShouldHandleGracefully() {
         // Arrange
         String emptyPayload = "";
-        doNothing().when(listener).sendLanMessage(TEST_URL, emptyPayload);
+        doNothing().when(listener).sendLanMessage(TEST_DEVICE_ID, TEST_URL, emptyPayload);
 
         // Act & Assert - Should not throw exception
-        assertDoesNotThrow(() -> listener.sendLanMessage(TEST_URL, emptyPayload));
-        verify(listener).sendLanMessage(TEST_URL, emptyPayload);
+        assertDoesNotThrow(() -> listener.sendLanMessage(TEST_DEVICE_ID, TEST_URL, emptyPayload));
+        verify(listener).sendLanMessage(TEST_DEVICE_ID, TEST_URL, emptyPayload);
     }
 
     @Test
@@ -300,14 +300,14 @@ class SonoffCommunicationManagerListenerTest {
         // Arrange
         when(listener.getState(TEST_DEVICE_ID)).thenReturn(mockDeviceState);
         when(listener.getListener(TEST_DEVICE_ID)).thenReturn(mockDeviceListener);
-        doNothing().when(listener).sendLanMessage(TEST_URL, TEST_PAYLOAD);
+        doNothing().when(listener).sendLanMessage(TEST_DEVICE_ID, TEST_URL, TEST_PAYLOAD);
         doNothing().when(listener).sendApiMessage(TEST_DEVICE_ID);
         doNothing().when(listener).sendWebsocketMessage(TEST_WEBSOCKET_PARAMS);
 
         // Act
         SonoffDeviceState state = listener.getState(TEST_DEVICE_ID);
         SonoffDeviceListener deviceListener = listener.getListener(TEST_DEVICE_ID);
-        listener.sendLanMessage(TEST_URL, TEST_PAYLOAD);
+        listener.sendLanMessage(TEST_DEVICE_ID, TEST_URL, TEST_PAYLOAD);
         listener.sendApiMessage(TEST_DEVICE_ID);
         listener.sendWebsocketMessage(TEST_WEBSOCKET_PARAMS);
 
@@ -317,7 +317,7 @@ class SonoffCommunicationManagerListenerTest {
 
         verify(listener).getState(TEST_DEVICE_ID);
         verify(listener).getListener(TEST_DEVICE_ID);
-        verify(listener).sendLanMessage(TEST_URL, TEST_PAYLOAD);
+        verify(listener).sendLanMessage(TEST_DEVICE_ID, TEST_URL, TEST_PAYLOAD);
         verify(listener).sendApiMessage(TEST_DEVICE_ID);
         verify(listener).sendWebsocketMessage(TEST_WEBSOCKET_PARAMS);
     }
@@ -330,7 +330,7 @@ class SonoffCommunicationManagerListenerTest {
         // Arrange
         when(listener.getState(anyString())).thenReturn(null);
         when(listener.getListener(anyString())).thenReturn(null);
-        doNothing().when(listener).sendLanMessage(anyString(), anyString());
+        doNothing().when(listener).sendLanMessage(anyString(), anyString(), anyString());
         doNothing().when(listener).sendApiMessage(anyString());
         doNothing().when(listener).sendWebsocketMessage(anyString());
 
@@ -338,7 +338,7 @@ class SonoffCommunicationManagerListenerTest {
         assertDoesNotThrow(() -> {
             listener.getState("test");
             listener.getListener("test");
-            listener.sendLanMessage("url", "payload");
+            listener.sendLanMessage(TEST_DEVICE_ID, "url", "payload");
             listener.sendApiMessage("deviceid");
             listener.sendWebsocketMessage("params");
         });
@@ -368,7 +368,7 @@ class SonoffCommunicationManagerListenerTest {
         }
 
         @Override
-        public void sendLanMessage(String url, String payload) {
+        public void sendLanMessage(String deviceid, String url, String payload) {
             // Test implementation - no-op
         }
 
@@ -402,7 +402,7 @@ class SonoffCommunicationManagerListenerTest {
         assertNull(testListener.getListener("invalid-device"));
 
         // These should not throw exceptions
-        assertDoesNotThrow(() -> testListener.sendLanMessage(TEST_URL, TEST_PAYLOAD));
+        assertDoesNotThrow(() -> testListener.sendLanMessage(TEST_DEVICE_ID, TEST_URL, TEST_PAYLOAD));
         assertDoesNotThrow(() -> testListener.sendApiMessage(TEST_DEVICE_ID));
         assertDoesNotThrow(() -> testListener.sendWebsocketMessage(TEST_WEBSOCKET_PARAMS));
     }
@@ -417,7 +417,7 @@ class SonoffCommunicationManagerListenerTest {
 
         when(listener.getState(specialDeviceId)).thenReturn(null);
         when(listener.getListener(specialDeviceId)).thenReturn(null);
-        doNothing().when(listener).sendLanMessage(specialUrl, specialPayload);
+        doNothing().when(listener).sendLanMessage(TEST_DEVICE_ID, specialUrl, specialPayload);
         doNothing().when(listener).sendApiMessage(specialDeviceId);
         doNothing().when(listener).sendWebsocketMessage(specialParams);
 
@@ -425,14 +425,14 @@ class SonoffCommunicationManagerListenerTest {
         assertDoesNotThrow(() -> {
             listener.getState(specialDeviceId);
             listener.getListener(specialDeviceId);
-            listener.sendLanMessage(specialUrl, specialPayload);
+            listener.sendLanMessage(TEST_DEVICE_ID, specialUrl, specialPayload);
             listener.sendApiMessage(specialDeviceId);
             listener.sendWebsocketMessage(specialParams);
         });
 
         verify(listener).getState(specialDeviceId);
         verify(listener).getListener(specialDeviceId);
-        verify(listener).sendLanMessage(specialUrl, specialPayload);
+        verify(listener).sendLanMessage(TEST_DEVICE_ID, specialUrl, specialPayload);
         verify(listener).sendApiMessage(specialDeviceId);
         verify(listener).sendWebsocketMessage(specialParams);
     }

@@ -599,7 +599,8 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
         if (name != null && name.startsWith("eWeLink_")) {
             return name.substring("eWeLink_".length());
         }
-        return event.getInfo().getPropertyString("id");
+        ServiceInfo info = event.getInfo();
+        return info == null ? null : info.getPropertyString("id");
     }
 
     /**
