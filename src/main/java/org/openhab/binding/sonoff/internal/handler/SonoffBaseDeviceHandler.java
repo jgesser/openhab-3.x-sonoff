@@ -48,7 +48,10 @@ public abstract class SonoffBaseDeviceHandler extends BaseThingHandler implement
     protected Boolean isLocalIn = false;
     protected Boolean isLocalOut = false;
     protected String deviceid = "";
-    boolean taskStarted = false;
+    // Guards starting and cancelling the tasks: the bridge callback and initialize() can both reach
+    // bridgeStatusChanged() at the same time, and a second start would schedule every poll twice
+    private final Object tasksLock = new Object();
+    volatile boolean taskStarted = false;
 
     protected @Nullable SonoffAccountHandler account;
     protected final Map<String, SonoffRfDeviceListener> rfListeners = new HashMap<>();
@@ -115,8 +118,10 @@ public abstract class SonoffBaseDeviceHandler extends BaseThingHandler implement
         if (account != null) {
             account.removeDeviceListener(this.deviceid);
         }
-        cancelTasks();
-        this.taskStarted = false;
+        synchronized (tasksLock) {
+            cancelTasks();
+            this.taskStarted = false;
+        }
         this.cloud = false;
         this.local = false;
         this.account = null;
@@ -129,15 +134,17 @@ public abstract class SonoffBaseDeviceHandler extends BaseThingHandler implement
         SonoffAccountHandler account = this.account;
         if (account != null) {
             if (bridgeStatusInfo.getStatus().equals(ThingStatus.ONLINE)) {
-                if (!taskStarted) {
-                    if (isLocalIn) {
-                        logger.debug("Requesting local update for {}", this.deviceid);
-                        account.addLanService(deviceid);
-                        // account.requestLanUpdate(deviceid);
-                        // account.requestLanUpdate();
+                synchronized (tasksLock) {
+                    if (!taskStarted) {
+                        if (isLocalIn) {
+                            logger.debug("Requesting local update for {}", this.deviceid);
+                            account.addLanService(deviceid);
+                            // account.requestLanUpdate(deviceid);
+                            // account.requestLanUpdate();
+                        }
+                        startTasks();
+                        taskStarted = true;
                     }
-                    startTasks();
-                    taskStarted = true;
                 }
                 if (!account.getMode().equals("local")) {
                     logger.debug("Requesting cloud update for {}", this.deviceid);
@@ -148,8 +155,10 @@ public abstract class SonoffBaseDeviceHandler extends BaseThingHandler implement
                 if (isLocalIn) {
                     account.removeLanService(deviceid);
                 }
-                cancelTasks();
-                taskStarted = false;
+                synchronized (tasksLock) {
+                    cancelTasks();
+                    taskStarted = false;
+                }
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Bridge Offline");
             }
         }
