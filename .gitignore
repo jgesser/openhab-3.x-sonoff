@@ -11,3 +11,6 @@ conf.d/*.ps1
 !conf.d/*.example
 
 docs/development/instructions/*
+
+# Maven creates this literal folder when it is run from the module without the openhab-addons root (property unset)
+/${maven.multiModuleProjectDirectory}/

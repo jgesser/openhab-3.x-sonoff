@@ -282,10 +282,10 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
 
             // Special logging for consumption polling requests
             if (message.getCommand().equals("consumption")) {
-                logger.info("========== CONSUMPTION POLLING REQUEST ==========");
-                logger.info("Device ID: {}", message.getDeviceid());
-                logger.info("Sequence: {}", message.getSequence());
-                logger.info("Command: {}", message.getCommand());
+                logger.debug("========== CONSUMPTION POLLING REQUEST ==========");
+                logger.debug("Device ID: {}", message.getDeviceid());
+                logger.debug("Sequence: {}", message.getSequence());
+                logger.debug("Command: {}", message.getCommand());
             }
 
             String params = gson.toJson(message.getParams().getCommand());
@@ -296,8 +296,8 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
 
             // Log full consumption request
             if (message.getCommand().equals("consumption")) {
-                logger.info("Full consumption request JSON: {}", fullRequest);
-                logger.info("=================================================");
+                logger.debug("Full consumption request JSON: {}", fullRequest);
+                logger.debug("=================================================");
             } else {
                 logger.debug("Full WebSocket request JSON: {}", fullRequest);
             }
@@ -413,8 +413,8 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
 
                 // Consumption message
                 if (messageType.equals("consumption")) {
-                    logger.info("========== CONSUMPTION POLLING RESPONSE ==========");
-                    logger.info("Full response JSON: {}", message);
+                    logger.debug("========== CONSUMPTION POLLING RESPONSE ==========");
+                    logger.debug("Full response JSON: {}", message);
 
                     JsonObject device = gson.fromJson(response, JsonObject.class);
                     if (device != null) {
@@ -422,17 +422,17 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
                         String deviceid = deviceidElement != null && !deviceidElement.isJsonNull()
                                 ? deviceidElement.getAsString()
                                 : "unknown";
-                        logger.info("Device ID: {}", deviceid);
+                        logger.debug("Device ID: {}", deviceid);
 
                         // Safely get config field - may be null for some devices
                         JsonElement configElement = device.get("config");
-                        logger.info("Config field present: {}, is null: {}", configElement != null,
+                        logger.debug("Config field present: {}, is null: {}", configElement != null,
                                 configElement != null ? configElement.isJsonNull() : "n/a");
 
                         if (configElement != null && !configElement.isJsonNull()) {
                             try {
                                 JsonObject params = configElement.getAsJsonObject();
-                                logger.info("Consumption config data: {}", params.toString());
+                                logger.debug("Consumption config data: {}", params.toString());
                                 device.add("params", params);
                                 processState(device, false);
                             } catch (Exception e) {
@@ -450,7 +450,7 @@ public class SonoffCommunicationManager implements Runnable, SonoffConnectionMan
                     } else {
                         logger.error("Failed to parse consumption response as JsonObject");
                     }
-                    logger.info("==================================================");
+                    logger.debug("==================================================");
                     return;
                 }
 
